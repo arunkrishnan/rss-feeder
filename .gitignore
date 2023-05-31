@@ -1,0 +1,5 @@
+__pycache__
+.pytest*
+celerybeat-schedule*
+commands.text
+test_db.db

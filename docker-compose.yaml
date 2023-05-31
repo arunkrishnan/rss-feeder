@@ -1,0 +1,37 @@
+version: "3.3"
+services:
+  db:
+    image: postgres:12
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
+  queue:
+    image: rabbitmq:3
+
+  web:
+    depends_on:
+      - db
+    env_file:
+      - .env
+    build: .
+    command: bash -c "cd app && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 80 --reload"
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/app
+  
+  celeryworker:
+    depends_on:
+      - db
+      - queue
+    env_file:
+      - .env
+    build: .
+    command: celery -A app.scheduler.tasks worker -l info -Q job1 -c 1 -B
+
+volumes:
+  app-db-data:
